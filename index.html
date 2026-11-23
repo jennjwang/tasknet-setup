@@ -215,7 +215,7 @@ const STEPS = [
     <p class="lede">TaskNet interviews workers about their jobs and turns what they say into an occupational task list. This guide sets up both halves, one step at a time. Your progress is saved in this browser.</p>
     <div class="choices" role="list">
       <div class="choice" role="listitem"><span class="tag">Part 1 · in your browser</span><b>Put the interviewer online</b><span>Your own interviewer at a web address. Send participants links, then download their interviews as a zip.</span>
-        <dl><dt>You need</dt><dd>An OpenAI key and a Render account (a few dollars a month). No coding.</dd></dl></div>
+        <dl><dt>You need</dt><dd>An OpenAI key, and a Render account (a few dollars a month, no coding) or a Google Cloud project (cents a month, uses a terminal).</dd></dl></div>
       <div class="choice" role="listitem"><span class="tag">Part 2 · on your computer</span><b>Set up the aggregator</b><span>Turns the downloaded interviews into one task list per occupation.</span>
         <dl><dt>You need</dt><dd>A Mac or Linux terminal, and OpenAI (plus optionally Claude) API access. The installer handles the rest.</dd></dl></div>
     </div>
@@ -252,6 +252,12 @@ const STEPS = [
       <li>Copy the address at the top of the page. It ends in <code>.onrender.com</code>.</li>
     </ol>
     <div class="note info"><span>Interviews are saved on a small disk attached to the server, so nothing is lost when it restarts. Render's free plan has no disk, so this runs on a small paid plan that costs a few dollars a month (see <a href="https://render.com/pricing">render.com/pricing</a>). Delete the service when your study ends to stop the charges.</span></div>
+    <details><summary>Prefer Google Cloud?</summary><div>
+      <p>Google Cloud Run works too, and can cost less: it charges only while an interview is running (usually cents a month), and interviews are saved to a Cloud Storage bucket. Your university may already have a Google Cloud account you can use. The trade-off is that setup happens in a terminal rather than with a button.</p>
+      <p>You need a Google Cloud project with billing turned on, the <a href="https://cloud.google.com/sdk/docs/install">gcloud CLI</a>, and the repo on your computer (Part 2's <b>Clone &amp; install</b> step). Then, from <code>tasknet-system</code>:</p>
+      ${term("terminal", ["$ gcloud auth login", "$ export TASKNET_PROJECT=<your-project-id>", "$ hosting/study.sh setup                 # once: turns on the Google services it needs", "$ hosting/study.sh build                 # once: packages the interviewer", "$ hosting/study.sh create my-study       # prints your address and admin password"])}
+      <p>Open <code>&lt;your address&gt;/admin</code>, sign in with that password, and paste your OpenAI key there. Paste the address into the box below and carry on from <b>Test &amp; share</b>. For occupations and a consent link, add <code>--soc</code> and <code>--consent</code> to <code>create</code>; <code>hosting/README.md</code> lists every command, including <code>remove</code> for when the study ends.</p>
+    </div></details>
     <div class="block">
       <div class="field"><label for="appUrl">Your interviewer's address</label><input id="appUrl" data-field="appUrl" placeholder="https://tasknet-interviewer-xxxx.onrender.com" value="${esc(S.appUrl)}"><small>Paste it here and the next steps fill in your links.</small></div>
     </div>
