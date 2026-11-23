@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Step-by-step setup for the TaskNet System: put the interviewer online, then set up the aggregator.">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}</style>
+<title>TaskNet Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: left rail of steps (the setup as a sequence) + one working pane; rail collapses to a top strip on phones. */
+:root {
+  --bg: #f6f7fa;
+  --panel: #ffffff;
+  --ink: #161a24;
+  --muted: #5a6274;
+  --line: #dfe3ec;
+  --accent: #2743c9;
+  --accent-soft: #e7ebfb;
+  --code-bg: #10131c;
+  --code-ink: #dfe5f2;
+  --code-dim: #7c869c;
+  --ok: #1d8a52;
+  --ok-soft: #e2f4ea;
+  --warn: #a8670a;
+  --warn-soft: #fbf0dc;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1118; --panel: #151925; --ink: #e6e9f2; --muted: #98a0b4; --line: #262c3c;
+    --accent: #8ea2ff; --accent-soft: #1d2440; --code-bg: #0a0c12; --code-ink: #dfe5f2; --code-dim: #6c7690;
+    --ok: #5fd197; --ok-soft: #13291e; --warn: #f0b45a; --warn-soft: #2c2210; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1118; --panel: #151925; --ink: #e6e9f2; --muted: #98a0b4; --line: #262c3c;
+  --accent: #8ea2ff; --accent-soft: #1d2440; --code-bg: #0a0c12; --code-ink: #dfe5f2; --code-dim: #6c7690;
+  --ok: #5fd197; --ok-soft: #13291e; --warn: #f0b45a; --warn-soft: #2c2210; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6; }
+.shell { display: grid; grid-template-columns: 270px minmax(0, 1fr); min-height: 100vh; max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); gap: 40px; }
+nav.rail { position: sticky; top: 0; align-self: start; padding-block: 32px; display: flex; flex-direction: column; gap: 20px; }
+.brand { display: flex; flex-direction: column; gap: 2px; }
+.brand b { font-family: var(--font-display); font-size: 22px; letter-spacing: -0.01em; }
+.brand span { color: var(--muted); font-size: 13px; }
+.progress { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+.progress-label { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+ol.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+ol.steps button { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: center;
+  width: 100%; padding: 8px 10px; border-radius: 8px; color: var(--muted); font-size: 14px; }
+ol.steps button:hover { background: var(--accent-soft); color: var(--ink); }
+ol.steps button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+ol.steps button[aria-current="step"] { background: var(--panel); color: var(--ink); box-shadow: 0 0 0 1px var(--line); font-weight: 600; }
+ol.steps .num { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center;
+  font: 500 12px var(--font-mono); background: var(--panel); }
+ol.steps button[aria-current="step"] .num { border-color: var(--accent); color: var(--accent); }
+ol.steps button.done .num { background: var(--ok); border-color: var(--ok); color: var(--panel); }
+ol.steps button.skip { opacity: .45; }
+.rail-foot { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+.rail-foot a { color: var(--muted); }
+main { padding-block: 32px 80px; min-width: 0; }
+section.step { display: flex; flex-direction: column; gap: 20px; max-width: 760px; }
+.eyebrow { font: 500 12px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--font-display); font-size: 34px; line-height: 1.15; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-size: 19px; margin: 0; letter-spacing: -0.01em; }
+p { margin: 0; max-width: 66ch; }
+.lede { font-size: 16.5px; color: var(--muted); }
+code { font-family: var(--font-mono); font-size: .88em; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+a { color: var(--accent); }
+.block { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.term { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; overflow: hidden; min-width: 0; }
+.term-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #ffffff14; font: 12px var(--font-mono); color: var(--code-dim); gap: 8px; }
+.term pre { margin: 0; padding: 14px 16px; overflow-x: auto; font: 13px/1.65 var(--font-mono); white-space: pre; }
+.term .c { color: var(--code-dim); }
+.term .p { color: #8ea2ff; user-select: none; }
+.copy { all: unset; cursor: pointer; font: 500 12px var(--font-mono); color: var(--code-ink); padding: 3px 9px; border: 1px solid #ffffff2a; border-radius: 6px; }
+.copy:hover { background: #ffffff14; }
+.copy:focus-visible { outline: 2px solid #8ea2ff; }
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.choice { all: unset; box-sizing: border-box; cursor: pointer; border: 1.5px solid var(--line); background: var(--panel); border-radius: 12px; padding: 16px;
+  display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.choice:hover { border-color: var(--accent); }
+div.choice { cursor: default; }
+div.choice:hover { border-color: var(--line); }
+.choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.choice[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.choice b { font-family: var(--font-display); font-size: 16px; }
+.choice span { font-size: 13.5px; color: var(--muted); }
+.choice dl { margin: 6px 0 0; padding-top: 10px; border-top: 1px solid var(--line); display: grid; gap: 2px; font-size: 13px; }
+.choice dt { font: 500 11px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+.choice dt:first-child { margin-top: 0; }
+.choice dd { margin: 0; color: var(--ink); }
+.choice .tag { font: 500 11px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.checks { display: flex; flex-direction: column; gap: 8px; }
+.check { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; cursor: pointer; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--ok); }
+.check:has(input:checked) { background: var(--ok-soft); border-color: transparent; }
+.check small { display: block; color: var(--muted); font-size: 13px; }
+.note { border-radius: 10px; padding: 12px 14px; font-size: 14px; display: flex; gap: 10px; }
+.note.warn { background: var(--warn-soft); color: var(--ink); }
+.note.warn::before { content: "!"; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--warn); color: var(--panel); display: grid; place-items: center; font: 700 12px var(--font-mono); }
+.note.info { background: var(--accent-soft); }
+.note.info::before { content: "i"; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: var(--panel); display: grid; place-items: center; font: 700 12px var(--font-mono); }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field label { font-weight: 600; font-size: 13.5px; }
+.field small { color: var(--muted); font-size: 12.5px; }
+.field input, .field select { font: 14px var(--font-mono); padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); width: 100%; }
+.field input:focus, .field select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.pipeline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font: 13px var(--font-mono); }
+.pipeline span { padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.pipeline i { color: var(--muted); font-style: normal; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.tablewrap { overflow-x: auto; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 11.5px var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.navrow { display: flex; justify-content: space-between; gap: 12px; padding-top: 8px; flex-wrap: wrap; }
+.btn { all: unset; cursor: pointer; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 14px; }
+.btn.primary { background: var(--accent); color: var(--panel); }
+.btn.ghost { border: 1px solid var(--line); color: var(--ink); background: var(--panel); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn[hidden] { display: none !important; }
+a.btn { display: inline-block; align-self: flex-start; text-decoration: none; }
+.btn.big { font-size: 16px; padding: 13px 22px; }
+.howto { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 10px; max-width: 66ch; }
+.howto li { padding-left: 4px; }
+.howto .tablewrap { margin-top: 8px; }
+details { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+details summary { cursor: pointer; padding: 12px 14px; font-weight: 600; }
+details > div { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; color: var(--ink); }
+.toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg);
+  padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  nav.rail { position: static; padding-block: 20px 8px; }
+  ol.steps { flex-direction: row; overflow-x: auto; gap: 4px; padding-bottom: 4px; }
+  ol.steps button { grid-template-columns: 26px; padding: 6px; }
+  ol.steps .lbl { display: none; }
+  .rail-foot { display: none; }
+  main { padding-block: 12px 60px; }
+  h1 { font-size: 27px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+
+<div class="shell">
+  <nav class="rail" aria-label="Setup steps">
+    <div class="brand"><b>TaskNet Setup</b><span>tasknet-system · v0.2.0</span></div>
+    <div>
+      <div class="progress"><i id="bar"></i></div>
+      <div class="progress-label" id="plabel">0 of 0 checks done</div>
+    </div>
+    <ol class="steps" id="steps"></ol>
+    <div class="rail-foot">
+      <a href="https://github.com/jennjwang/tasknet-system">github.com/jennjwang/tasknet-system</a>
+      <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7670419">The TaskNet paper (SSRN)</a>
+      <button class="btn ghost" id="reset" style="padding:6px 10px;font-size:12px;align-self:start">Reset progress</button>
+    </div>
+  </nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const S = { appUrl: "", prefix: "p", count: "10", provider: "split", occ: "accountants-and-auditors", soc: "", consent: "", pid: "pilot-01", step: 0, checks: {} };
+try { Object.assign(S, JSON.parse(localStorage.getItem("tasknet-setup") || "{}")); } catch (e) {}
+const save = () => { try { localStorage.setItem("tasknet-setup", JSON.stringify(S)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// Terminal block. Lines starting with "#" render as comments; "$ " marks a command.
+function term(title, lines, raw) {
+  const body = lines.map(l => {
+    if (l.startsWith("#")) return `<span class="c">${esc(l)}</span>`;
+    if (l.startsWith("$ ")) return `<span class="p">$ </span>${esc(l.slice(2))}`;
+    return esc(l);
+  }).join("\n");
+  const copyText = raw ?? lines.filter(l => !l.startsWith("#")).map(l => l.startsWith("$ ") ? l.slice(2) : l).join("\n");
+  return `<div class="term"><div class="term-head"><span>${esc(title)}</span><button class="copy" data-copy="${esc(copyText)}">Copy</button></div><pre>${body}</pre></div>`;
+}
+function check(id, label, sub) {
+  return `<label class="check"><input type="checkbox" data-check="${id}" ${S.checks[id] ? "checked" : ""}><span>${label}${sub ? `<small>${sub}</small>` : ""}</span></label>`;
+}
+
+function envRoot() {
+  const head = ["# tasknet-system/.env  (read by `tasknet process` / `tasknet build`)"];
+  if (S.provider === "gateway") return head.concat(["# One OpenAI-compatible endpoint (e.g. LiteLLM) that serves gpt-* and claude-* models", "LLM_API_KEY=<your gateway key>", "LLM_BASE_URL=https://<your-gateway>/v1"]);
+  if (S.provider === "openai") return head.concat(["OPENAI_API_KEY=sk-...", "# No Claude gateway: configs.yml (below) moves the two Claude stages to gpt-5.4"]);
+  return head.concat(["OPENAI_API_KEY=sk-...", "# claude-* models go through an OpenAI-compatible gateway (required, no default)", "CLAUDE_API_KEY=<your gateway key>", "CLAUDE_BASE_URL=https://<your-gateway>/v1"]);
+}
+function envInterviewer() {
+  const L = ["# tasknet-system/interviewer/.env", "OPENAI_API_KEY=sk-...   # required: also used for voice transcription"];
+  if (S.provider === "gateway") L.push("LLM_API_KEY=<your gateway key>", "LLM_BASE_URL=https://<your-gateway>/v1");
+  if (S.soc.trim()) L.push(`SCREENER_TARGET_SOC=${S.soc.replace(/\s+/g, "")}`); else L.push("# SCREENER_TARGET_SOC=   # unset = no occupation screener");
+  if (S.consent.trim()) L.push(`VITE_CONSENT_URL=${S.consent.trim()}`); else L.push("# VITE_CONSENT_URL=/my-consent-form.pdf");
+  L.push("# GAPFILL_COUNT=10", "# PLANNER_MAX_TURNS=17", "# SESSIONS_DIR=          # default interviewer/sessions/");
+  return L;
+}
+
+const STEPS = [
+  { id: "start", label: "Overview", render: () => `
+    <div class="eyebrow">Start here</div>
+    <h1>Set up the TaskNet System</h1>
+    <p class="lede">TaskNet interviews workers about their jobs and turns what they say into an occupational task list. This guide sets up both halves, one step at a time. Your progress is saved in this browser.</p>
+    <div class="choices" role="list">
+      <div class="choice" role="listitem"><span class="tag">Part 1 · in your browser</span><b>Put the interviewer online</b><span>Your own interviewer at a web address. Send participants links, then download their interviews as a zip.</span>
+        <dl><dt>You need</dt><dd>An OpenAI key and a Render account (a few dollars a month). No coding.</dd></dl></div>
+      <div class="choice" role="listitem"><span class="tag">Part 2 · on your computer</span><b>Set up the aggregator</b><span>Turns the downloaded interviews into one task list per occupation.</span>
+        <dl><dt>You need</dt><dd>A Mac or Linux terminal, and OpenAI (plus optionally Claude) API access. The installer handles the rest.</dd></dl></div>
+    </div>
+    <div class="pipeline" aria-label="How the parts connect"><span>participants</span><i>→</i><span>interviewer</span><i>→</i><span>interviews.zip</span><i>→</i><span>aggregator</span><i>→</i><span>task list</span></div>
+    <p style="color:var(--muted)">You can do Part 2 while you wait for interviews to come in.</p>` },
+
+  { id: "hkey", part: 1, label: "Get an OpenAI key", need: "host", render: () => `
+    <h1>Get an OpenAI API key</h1>
+    <p class="lede">The interviewer uses OpenAI's models to ask questions, transcribe spoken answers and write each participant's task list. OpenAI bills you for what your participants use, so you need your own key.</p>
+    <ol class="howto">
+      <li>Sign in or sign up at <a href="https://platform.openai.com">platform.openai.com</a>.</li>
+      <li>Open <b>Settings → Billing</b> and add a payment method or some credit.</li>
+      <li>Open <a href="https://platform.openai.com/api-keys"><b>API keys</b></a>, click <b>Create new secret key</b>, and copy it. It starts with <code>sk-</code> and is shown only once, so keep it somewhere safe for a later step.</li>
+    </ol>
+    <div class="note warn"><span>Treat the key like a password. Anyone who has it can spend your OpenAI credit.</span></div>
+    <div class="checks">
+      ${check("hacct", "OpenAI account with billing set up")}
+      ${check("hkeyc", "Secret key copied (starts with <code>sk-</code>)")}
+    </div>` },
+
+  { id: "hdeploy", part: 1, label: "Deploy on Render", need: "render", render: () => `
+    <h1>Put your interviewer online</h1>
+    <p class="lede">Render is a hosting service. This button copies TaskNet's interviewer into your own Render account and starts it at a web address of its own.</p>
+    <a class="btn primary big" href="https://render.com/deploy?repo=https://github.com/jennjwang/tasknet-system">Deploy to Render ↗</a>
+    <ol class="howto">
+      <li>Sign up or log in to Render. An email address is enough.</li>
+      <li>Render shows a service called <b>tasknet-interviewer</b> and asks for two values:
+        <div class="tablewrap"><table><tbody>
+          <tr><td><code>OPENAI_API_KEY</code></td><td>Paste the key from the previous step.</td></tr>
+          <tr><td><code>ADMIN_PASSWORD</code></td><td>Make up a password. You'll use it to download the interviews.</td></tr>
+        </tbody></table></div></li>
+      <li>Add a payment method if Render asks, then click <b>Deploy</b>.</li>
+      <li>Wait for the status to say <b>Live</b>. The first build takes about five minutes.</li>
+      <li>Copy the address at the top of the page. It ends in <code>.onrender.com</code>.</li>
+    </ol>
+    <div class="note info"><span>Interviews are saved on a small disk attached to the server, so nothing is lost when it restarts. Render's free plan has no disk, so this runs on a small paid plan that costs a few dollars a month (see <a href="https://render.com/pricing">render.com/pricing</a>). Delete the service when your study ends to stop the charges.</span></div>
+    <div class="block">
+      <div class="field"><label for="appUrl">Your interviewer's address</label><input id="appUrl" data-field="appUrl" placeholder="https://tasknet-interviewer-xxxx.onrender.com" value="${esc(S.appUrl)}"><small>Paste it here and the next steps fill in your links.</small></div>
+    </div>
+    <div class="checks">
+      ${check("hlive", "Render shows the service as Live")}
+      ${check("hurl", "Pasted the address above")}
+    </div>` },
+
+  { id: "hsettings", part: 1, label: "Study settings", need: "render", render: () => `
+    <h1>Choose your study settings</h1>
+    <p class="lede">Both settings are optional. Skip this step to interview anyone, with no consent link.</p>
+    <div class="block">
+      <div class="fields">
+        <div class="field"><label for="soc">Occupations to recruit</label><input id="soc" data-field="soc" placeholder="13-2011.00, 15-1252.00" value="${esc(S.soc)}"><small>O*NET-SOC codes, from <a href="https://www.onetonline.org">onetonline.org</a>. Participants who pick a different occupation are politely screened out.</small></div>
+        <div class="field"><label for="consent">Consent form link</label><input id="consent" data-field="consent" placeholder="https://your-university.edu/consent.pdf" value="${esc(S.consent)}"><small>Shown on the welcome screen.</small></div>
+      </div>
+    </div>
+    ${S.soc.trim() || S.consent.trim() ? `<p>In Render, open your service, then <b>Environment → Add environment variable</b>, and add:</p>
+      ${term("Render → Environment", hostEnv(), hostEnv().join("\n"))}
+      <p style="color:var(--muted)">Saving restarts the interviewer with the new settings. That takes a few minutes.</p>` : ""}
+    <div class="note info"><span>Changing the questions or wording needs code changes (<code>interviewer/src/settings.ts</code> and <code>interviewer/prompts/interview/guide.json</code>). Fork the repo, edit them (<code>npm run dev</code> runs the interviewer locally to try changes), and deploy your fork instead.</span></div>
+    <div class="checks">${check("hset", "Settings added, or skipped")}</div>` },
+
+  { id: "hshare", part: 1, label: "Test & share", need: "host", render: () => `
+    <h1>Try it, then send links</h1>
+    <p class="lede">Do one full interview yourself first. Then give each participant their own link. The id in the link names their interview file, and reopening the same link picks up where they left off.</p>
+    <h2>Your test link</h2>
+    ${term("browser", [base() + "/?id=test-me"])}
+    <h2>Participant links</h2>
+    <div class="fields">
+      <div class="field"><label for="prefix">Id prefix</label><input id="prefix" data-field="prefix" value="${esc(S.prefix)}"><small>Letters, numbers, dashes.</small></div>
+      <div class="field"><label for="count">How many links</label><input id="count" data-field="count" type="number" min="1" max="500" value="${esc(S.count)}"></div>
+    </div>
+    ${term(`${linkList().length} links`, linkList())}
+    <div class="checks">
+      ${check("htried", "Finished a test interview myself")}
+      ${check("hsent", "Sent links to participants")}
+    </div>` },
+
+  { id: "hdownload", part: 1, label: "Download interviews", need: "host", render: () => `
+    <h1>Download the interviews</h1>
+    <p class="lede">Open your admin page, enter your admin password, and you get a .zip of every interview saved so far. Download as often as you like.</p>
+    ${term("browser", [base() + "/admin"])}
+    <div class="tablewrap"><table>
+      <thead><tr><th>In the zip</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td><code>interviews/</code></td><td>One file per participant, named with their id: the transcript, their occupation, and the task list they confirmed.</td></tr>
+        <tr><td><code>screening/</code></td><td>People screened out, and each screener decision.</td></tr>
+      </tbody>
+    </table></div>
+    <p>The admin page also shows how many interviews you have so far.</p>
+    <p>Part 2 sets up the aggregator, which turns the <code>interviews/</code> folder into the occupation's task list.</p>
+    <div class="note warn"><span>The files contain what participants told you. Store them the way your consent form and ethics approval say. When the study ends, download one last time, then delete the service in Render (<b>Settings → Delete</b>).</span></div>
+    <div class="checks">${check("hdl", "Downloaded the interviews")}</div>` },
+
+  { id: "prereq", part: 2, label: "Prerequisites", need: "local", render: () => `
+    <h1>Check your tools</h1>
+    <p class="lede">Open a terminal (on a Mac: <b>Terminal</b>, in Applications → Utilities). Run these; each should print a version at or above the one listed. Missing some? The installer in the next step can add them.</p>
+    ${term("terminal", ["$ git --version", "$ python3 --version     # need 3.10 or newer", "$ node --version        # need 22 or newer", "$ npm --version"])}
+    <div class="checks">
+      ${check("git", "git is installed", "Needed to clone the repo and its <code>aggregate</code> submodule.")}
+      ${check("py", "Python 3.10+", "The pipeline (<code>tasknet</code> package) and the validation input builder.")}
+      ${check("node", "Node.js 22+", "Used by <code>make setup</code> and the tests.")}
+      ${check("keys", "An OpenAI API key", "Every default model is OpenAI except two Claude stages in the pipeline. The <b>API keys</b> step covers the options.")}
+    </div>` },
+
+  { id: "install", part: 2, label: "Clone & install", need: "local", render: () => `
+    <h1>Clone and install</h1>
+    <p class="lede"><code>make setup</code> fetches the <code>aggregate</code> submodule, creates <code>.venv</code> with both Python packages, and installs the npm workspace for the interviewer.</p>
+    ${term("terminal", ["$ git clone --recurse-submodules https://github.com/jennjwang/tasknet-system.git", "$ cd tasknet-system", "$ make setup", "$ source .venv/bin/activate     # puts the `tasknet` command on your PATH"])}
+    <div class="note info"><span>Prefer one command? After cloning, <code>./setup.sh</code> does this step and the next two: it offers to install any missing tools, asks for your keys, writes both <code>.env</code> files, downloads O*NET and runs the tests.</span></div>
+    <div class="note warn"><span>Cloned without <code>--recurse-submodules</code>? The <code>aggregate/</code> folder will be empty. <code>make setup</code> runs <code>git submodule update --init</code> for you, or run it yourself.</span></div>
+    <div class="checks">
+      ${check("cloned", "Repo cloned with <code>aggregate/</code> populated")}
+      ${check("setup", "<code>make setup</code> finished without errors")}
+    </div>` },
+
+  { id: "keys", part: 2, label: "API keys", need: "local", render: () => `
+    <h1>Add your API keys</h1>
+    <p class="lede">Pick how you reach the models. The pipeline's defaults use OpenAI for most stages and <code>claude-sonnet-4-6</code> for writing and sharpening task statements.</p>
+    <div class="choices" role="group" aria-label="Model access">
+      ${[["split", "OpenAI + Claude gateway", "As in the paper", "OpenAI key, plus an OpenAI-compatible endpoint that serves Claude."],
+         ["gateway", "One gateway", "LiteLLM etc.", "A single endpoint and key that serves every model."],
+         ["openai", "OpenAI only", "Simplest", "Move the two Claude stages to an OpenAI model with a configs.yml."]]
+        .map(([k, b, t, s]) => `<button class="choice" data-provider="${k}" aria-pressed="${S.provider === k}"><span class="tag">${t}</span><b>${b}</b><span>${s}</span></button>`).join("")}
+    </div>
+    <h2>Create <code>.env</code></h2>
+    ${term("terminal", ["$ cp .env.example .env"])}
+    <p>Then set these lines, replacing the placeholders with your own values:</p>
+    ${term(".env", envRoot(), envRoot().filter(l => !l.startsWith("#")).join("\n"))}
+    ${S.provider === "openai" ? `<p>Then add a <code>configs.yml</code> in the repo root (it's git-ignored and overlays aggregate's defaults):</p>
+      ${term("configs.yml", ["models:", "  write:   {model: gpt-5.4, effort: medium, max_out: 12000}", "  sharpen: {model: gpt-5.4, effort: medium}"])}
+      <div class="note info"><span>Results will differ from the paper's, which used Claude for these two stages.</span></div>` : ""}
+    <div class="note warn"><span>Never commit <code>.env</code>. Both <code>.env</code> files are git-ignored; keep it that way.</span></div>
+    <div class="checks">${check("env", "<code>.env</code> filled in at the repo root")}</div>` },
+
+  { id: "onet", part: 2, label: "O*NET data & tests", need: "local", render: () => `
+    <h1>Download O*NET, run the tests</h1>
+    <p class="lede">The O*NET task statements aren't stored in the repo. <code>make onet</code> downloads them into <code>data/onet/</code> (CC BY 4.0). The test suite needs no keys and makes no model calls.</p>
+    ${term("terminal", ["$ make onet       # or: tasknet onet", "$ make test       # vitest: the task-review components"])}
+    <div class="checks">
+      ${check("onetdl", "<code>data/onet/</code> exists and has files")}
+      ${check("tests", "<code>make test</code> passes")}
+    </div>` },
+
+  { id: "pipeline", part: 2, label: "Build a task list", need: "pipeline", render: () => `
+    <h1>Build a task list</h1>
+    <p class="lede">The pipeline reads one occupation's sessions, normalises them into task reports, then clusters and writes the shared task list. It caches every model call under <code>cache/</code>, so re-runs only pay for new work.</p>
+    <div class="pipeline"><span>process</span><i>→</i><span>build</span><i>→</i><span>audit</span><i>→</i><span>verify</span><i>→</i><span>adopt</span></div>
+    <div class="block">
+      <div class="fields">
+        <div class="field"><label for="occ">Occupation slug</label><input id="occ" data-field="occ" value="${esc(S.occ)}"><small>A folder name under <code>$DATA_DIR/interviews/</code>.</small></div>
+      </div>
+    </div>
+    <h2>Put the sessions where the pipeline looks</h2>
+    <p>Unzip the download from Part 1 and copy its <code>interviews/</code> folder to <code>data/interviews/${esc(S.occ)}/</code> inside <code>tasknet-system</code>. The pipeline reads every file in that folder as this occupation, so if you recruited several occupations, sort the files into one folder each first. (Or keep them anywhere and pass <code>--data-dir &lt;folder&gt;</code>.)</p>
+    ${term("terminal", pipelineCmds())}
+    <div class="tablewrap"><table>
+      <thead><tr><th>Command</th><th>Writes</th><th>Calls models</th></tr></thead>
+      <tbody>
+        <tr><td><code>process</code></td><td><code>results/processing/${esc(S.occ)}/3_deduped.csv</code></td><td>Yes</td></tr>
+        <tr><td><code>build</code></td><td><code>results/aggregation/${esc(S.occ)}/build.json</code></td><td>Yes</td></tr>
+        <tr><td><code>audit</code></td><td>Checks no reported task was lost</td><td>No</td></tr>
+        <tr><td><code>verify</code></td><td>Checks the list's invariants</td><td>No</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note info"><span><code>tasknet build --batch</code> uses the OpenAI Batch API: half price, but it blocks until the batch finishes.</span></div>
+    <div class="checks">
+      ${check("proc", "<code>process</code> wrote <code>3_deduped.csv</code>")}
+      ${check("build", "<code>build</code> wrote <code>build.json</code>, and <code>audit</code> + <code>verify</code> passed")}
+      ${check("adopt", "Adopted the list as <code>final.json</code>")}
+    </div>` },
+
+  { id: "help", label: "Troubleshooting", render: () => `
+    <div class="eyebrow">Reference</div><h1>Troubleshooting</h1>
+    <p class="lede">The problems people hit most, and what fixes them.</p>
+    ${[["Render says the deploy failed", "Open the service's <b>Events</b> tab and click the failed deploy to read its log. A missing <code>OPENAI_API_KEY</code> or <code>ADMIN_PASSWORD</code> is the usual cause: add it under <b>Environment</b>, which starts a new deploy."],
+       ["Participants see an error after the first question", "The OpenAI key is missing, wrong or out of credit. Check <b>Billing</b> on platform.openai.com. Then replace <code>OPENAI_API_KEY</code> under <b>Environment</b> in Render."],
+       ["The admin page says \"Admin is off\"", "Add <code>ADMIN_PASSWORD</code> under <b>Environment</b> in Render and wait for the restart."],
+       ["I forgot my admin password", "Change <code>ADMIN_PASSWORD</code> under <b>Environment</b> in Render. Interviews are not affected."],
+       ["<code>aggregate/</code> is empty or <code>import aggregate</code> fails", "The submodule wasn't fetched. Run <code>git submodule update --init</code>, then <code>make setup</code> again."],
+       ["<code>tasknet: command not found</code>", "Activate the venv (<code>source .venv/bin/activate</code>) or use the Make targets, which call <code>.venv/bin/python</code> directly."],
+       ["Errors about <code>CLAUDE_BASE_URL</code> during build", "The writer and sharpen stages default to Claude. Set a Claude gateway, a single <code>LLM_BASE_URL</code>, or switch those stages to an OpenAI model in <code>configs.yml</code> (the <b>API keys</b> step, \"OpenAI only\")."],
+       ["<code>node: bad option: --env-file-if-exists</code>", "Your Node is too old. Upgrade to Node 22 or newer."],
+       ["The interview keeps resuming an old session", "The session id is stored per <code>?id=</code>. Use a new id, or clear the site's storage."],
+       ["Paste is blocked in text fields", "That's on purpose for participants. Add <code>?paste=1</code> to the URL while testing."],
+       ["A build re-spends money after I edited a prompt", "Changing a prompt or model changes its cache key. To compare definitions, build <code>--fresh</code> with its own cache: <code>LLM_CACHE_DIR=cache/aggregation-v2</code>."]]
+      .map(([q, a]) => `<details><summary>${q}</summary><div><p>${a}</p></div></details>`).join("")}
+    <div class="block">
+      <h2>Where things live</h2>
+      <div class="tablewrap"><table><tbody>
+        <tr><td><code>tasknet/prompts/task_dimensions.txt</code></td><td>The task definition: what separates one task from another</td></tr>
+        <tr><td><code>aggregate/aggregate/configs.yml</code></td><td>Every pipeline setting; overlay with a <code>configs.yml</code> in your workspace</td></tr>
+        <tr><td><code>interviewer/src/settings.ts</code></td><td>Participant-facing wording and task-review behaviour</td></tr>
+        <tr><td><code>interviewer/prompts/</code></td><td>Every prompt the interview app sends</td></tr>
+      </tbody></table></div>
+    </div>` },
+];
+
+const base = () => (S.appUrl.trim() || "https://your-app.onrender.com").replace(/\/+$/, "");
+function linkList() {
+  const n = Math.max(1, Math.min(500, parseInt(S.count, 10) || 1));
+  const pre = (S.prefix || "p").replace(/[^A-Za-z0-9_-]/g, "") || "p";
+  const first = S.soc.split(",")[0].trim();
+  const width = Math.max(3, String(n).length);
+  return Array.from({ length: n }, (_, i) => `${base()}/?id=${pre}-${String(i + 1).padStart(width, "0")}${first ? `&soc=${first}` : ""}`);
+}
+function hostEnv() {
+  const L = [];
+  if (S.soc.trim()) L.push(`SCREENER_TARGET_SOC=${S.soc.replace(/\s+/g, "")}`);
+  if (S.consent.trim()) L.push(`CONSENT_URL=${S.consent.trim()}`);
+  return L;
+}
+function interviewUrl() {
+  const q = new URLSearchParams({ id: S.pid || "pilot-01" });
+  const first = S.soc.split(",")[0].trim(); if (first) q.set("soc", first);
+  return "http://localhost:5173/?" + q.toString().replace(/%2C/g, ",");
+}
+function pipelineCmds() {
+  return [`$ tasknet process ${S.occ}`, `$ tasknet build ${S.occ}`, `$ tasknet audit ${S.occ}`, `$ tasknet verify ${S.occ}`, "# happy with it? adopt the list:", `$ cp results/aggregation/${S.occ}/build.json results/aggregation/${S.occ}/final.json`];
+}
+
+const active = () => STEPS.map(() => true);
+function allChecks() {
+  const ids = []; const tmp = document.createElement("div");
+  STEPS.forEach((s, i) => { if (!active()[i]) return; tmp.innerHTML = s.render(); tmp.querySelectorAll("[data-check]").forEach(c => ids.push(c.dataset.check)); });
+  return ids;
+}
+function stepDone(i) {
+  const tmp = document.createElement("div"); tmp.innerHTML = STEPS[i].render();
+  const ids = [...tmp.querySelectorAll("[data-check]")].map(c => c.dataset.check);
+  return ids.length > 0 && ids.every(id => S.checks[id]);
+}
+function renderRail() {
+  const act = active();
+  document.getElementById("steps").innerHTML = STEPS.map((s, i) => act[i] ?
+    `<li><button data-step="${i}" ${i === S.step ? 'aria-current="step"' : ""} class="${stepDone(i) ? "done" : ""}" title="${esc(s.label)}">
+      <span class="num">${stepDone(i) ? "✓" : i === 0 ? "★" : i === STEPS.length - 1 ? "?" : stepNo(i)}</span><span class="lbl">${esc(s.label)}</span></button></li>` : "").join("");
+  const ids = allChecks(); const n = ids.filter(id => S.checks[id]).length;
+  document.getElementById("bar").style.width = (ids.length ? 100 * n / ids.length : 0) + "%";
+  document.getElementById("plabel").textContent = `${n} of ${ids.length} checks done`;
+}
+// Position among the numbered steps of the chosen path (the start page and troubleshooting are unnumbered).
+const numbered = () => STEPS.map((s, i) => i).filter(i => active()[i] && i > 0 && i < STEPS.length - 1);
+const stepNo = i => numbered().indexOf(i) + 1;
+function nextActive(from, dir) { let i = from + dir; while (i >= 0 && i < STEPS.length && !active()[i]) i += dir; return i; }
+function render(keepFocus) {
+  const s = STEPS[S.step];
+  const prev = nextActive(S.step, -1), next = nextActive(S.step, 1);
+  const no = stepNo(S.step);
+  document.getElementById("main").innerHTML = `<section class="step">${no > 0 ? `<div class="eyebrow">Part ${s.part} · ${s.part === 1 ? "Interviewer" : "Aggregator"} · Step ${no} of ${numbered().length}</div>` : ""}${s.render()}
+    <div class="navrow">
+      <button class="btn ghost" data-go="${prev}" ${prev < 0 ? "hidden" : ""}>← ${prev >= 0 ? esc(STEPS[prev].label) : ""}</button>
+      <button class="btn primary" data-go="${next}" ${next >= STEPS.length ? "hidden" : ""}>${next < STEPS.length ? esc(STEPS[next].label) : ""} →</button>
+    </div></section>`;
+  renderRail();
+  if (keepFocus) { const el = document.getElementById(keepFocus.id); if (el) { el.focus(); try { el.setSelectionRange(keepFocus.pos, keepFocus.pos); } catch (e) {} } }
+}
+function go(i) { if (i < 0 || i >= STEPS.length || !active()[i]) return; S.step = i; save(); render(); window.scrollTo({ top: 0 }); }
+
+const toast = msg => { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 1400); };
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-step],[data-go],[data-provider],.copy,#reset");
+  if (!t) return;
+  if (t.dataset.step) go(+t.dataset.step);
+  else if (t.dataset.go !== undefined) go(+t.dataset.go);
+  else if (t.dataset.provider) { S.provider = t.dataset.provider; save(); render(); }
+  else if (t.id === "reset") { S.checks = {}; S.step = 0; save(); render(); toast("Progress reset"); }
+  else if (t.classList.contains("copy")) {
+    const text = t.dataset.copy;
+    const done = () => { t.textContent = "Copied"; setTimeout(() => t.textContent = "Copy", 1200); };
+    try { navigator.clipboard.writeText(text).then(done, () => selectPre(t)); } catch (err) { selectPre(t); }
+  }
+});
+function selectPre(btn) { const pre = btn.closest(".term").querySelector("pre"); const r = document.createRange(); r.selectNodeContents(pre); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast("Selected. Press ⌘C / Ctrl+C"); }
+document.addEventListener("change", e => {
+  if (e.target.dataset.check) { S.checks[e.target.dataset.check] = e.target.checked; save(); renderRail(); if (e.target.checked && stepDone(S.step)) toast("Step complete"); }
+});
+document.addEventListener("input", e => {
+  const f = e.target.dataset.field; if (!f) return;
+  S[f] = e.target.value; save(); render({ id: e.target.id, pos: e.target.selectionStart });
+});
+if (S.step >= STEPS.length || !active()[S.step]) S.step = 0;
+render();
+</script>
+
+</body>
+</html>
