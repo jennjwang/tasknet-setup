@@ -266,21 +266,6 @@ const STEPS = [
       ${check("hurl", "Pasted the address above")}
     </div>` },
 
-  { id: "hsettings", part: 1, label: "Study settings", need: "render", render: () => `
-    <h1>Choose your study settings</h1>
-    <p class="lede">Both settings are optional. Skip this step to interview anyone, with no consent link.</p>
-    <div class="block">
-      <div class="fields">
-        <div class="field"><label for="soc">Occupations to recruit</label><input id="soc" data-field="soc" placeholder="13-2011.00, 15-1252.00" value="${esc(S.soc)}"><small>O*NET-SOC codes, from <a href="https://www.onetonline.org">onetonline.org</a>. Participants who pick a different occupation are politely screened out.</small></div>
-        <div class="field"><label for="consent">Consent form link</label><input id="consent" data-field="consent" placeholder="https://your-university.edu/consent.pdf" value="${esc(S.consent)}"><small>Shown on the welcome screen.</small></div>
-      </div>
-    </div>
-    ${S.soc.trim() || S.consent.trim() ? `<p>In Render, open your service, then <b>Environment → Add environment variable</b>, and add:</p>
-      ${term("Render → Environment", hostEnv(), hostEnv().join("\n"))}
-      <p style="color:var(--muted)">Saving restarts the interviewer with the new settings. That takes a few minutes.</p>` : ""}
-    <div class="note info"><span>Changing the questions or wording needs code changes (<code>interviewer/src/settings.ts</code> and <code>interviewer/prompts/interview/guide.json</code>). Fork the repo, edit them (<code>npm run dev</code> runs the interviewer locally to try changes), and deploy your fork instead.</span></div>
-    <div class="checks">${check("hset", "Settings added, or skipped")}</div>` },
-
   { id: "hshare", part: 1, label: "Test & share", need: "host", render: () => `
     <h1>Try it, then send links</h1>
     <p class="lede">Do one full interview yourself first. Then give each participant their own link. The id in the link names their interview file, and reopening the same link picks up where they left off.</p>
@@ -421,7 +406,7 @@ const base = () => (S.appUrl.trim() || "https://your-app.onrender.com").replace(
 function linkList() {
   const n = Math.max(1, Math.min(500, parseInt(S.count, 10) || 1));
   const pre = (S.prefix || "p").replace(/[^A-Za-z0-9_-]/g, "") || "p";
-  const first = S.soc.split(",")[0].trim();
+  const first = "";
   const width = Math.max(3, String(n).length);
   return Array.from({ length: n }, (_, i) => `${base()}/?id=${pre}-${String(i + 1).padStart(width, "0")}${first ? `&soc=${first}` : ""}`);
 }
