@@ -174,7 +174,7 @@ details > div { padding: 0 14px 14px; display: flex; flex-direction: column; gap
 <div class="toast" id="toast" role="status"></div>
 
 <script>
-const S = { appUrl: "", prefix: "p", count: "10", provider: "split", occ: "accountants-and-auditors", soc: "", consent: "", pid: "pilot-01", step: 0, checks: {} };
+const S = { appUrl: "", gproject: "", study: "my-study", prefix: "p", count: "10", provider: "split", occ: "accountants-and-auditors", soc: "", consent: "", pid: "pilot-01", step: 0, checks: {} };
 try { Object.assign(S, JSON.parse(localStorage.getItem("tasknet-setup") || "{}")); } catch (e) {}
 const save = () => { try { localStorage.setItem("tasknet-setup", JSON.stringify(S)); } catch (e) {} };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -215,7 +215,7 @@ const STEPS = [
     <p class="lede">TaskNet interviews workers about their jobs and turns what they say into an occupational task list. This guide sets up both halves, one step at a time. Your progress is saved in this browser.</p>
     <div class="choices" role="list">
       <div class="choice" role="listitem"><span class="tag">Part 1 · in your browser</span><b>Put the interviewer online</b><span>Your own interviewer at a web address. Send participants links, then download their interviews as a zip.</span>
-        <dl><dt>You need</dt><dd>An OpenAI key, and a Render account (a few dollars a month, no coding) or a Google Cloud project (cents a month, uses a terminal).</dd></dl></div>
+        <dl><dt>You need</dt><dd>An OpenAI key and a Google Cloud account with billing on (usually cents a month). Everything happens in your browser.</dd></dl></div>
       <div class="choice" role="listitem"><span class="tag">Part 2 · on your computer</span><b>Set up the aggregator</b><span>Turns the downloaded interviews into one task list per occupation.</span>
         <dl><dt>You need</dt><dd>A Mac or Linux terminal, and OpenAI (plus optionally Claude) API access. The installer handles the rest.</dd></dl></div>
     </div>
@@ -236,34 +236,39 @@ const STEPS = [
       ${check("hkeyc", "Secret key copied (starts with <code>sk-</code>)")}
     </div>` },
 
-  { id: "hdeploy", part: 1, label: "Host your interviewer", need: "render", render: () => `
+  { id: "hdeploy", part: 1, label: "Host your interviewer", render: () => `
     <h1>Host your interviewer</h1>
-    <p class="lede">Render is a hosting service. This button copies TaskNet's interviewer into your own Render account and starts it at a web address of its own.</p>
-    <a class="btn primary big" href="https://render.com/deploy?repo=https://github.com/jennjwang/tasknet-system">Deploy to Render ↗</a>
+    <p class="lede">Your interviewer runs on Google Cloud, in your own account. You set it up by pasting a few commands into Cloud Shell, a terminal that opens in your browser, so there's nothing to install. Google charges only while an interview is running, usually cents a month.</p>
+    <h2>1 · Get a Google Cloud project</h2>
     <ol class="howto">
-      <li>Sign up or log in to Render. An email address is enough.</li>
-      <li>Render shows a service called <b>tasknet-interviewer</b> and asks for two values:
-        <div class="tablewrap"><table><tbody>
-          <tr><td><code>OPENAI_API_KEY</code></td><td>Paste the key from the previous step.</td></tr>
-          <tr><td><code>ADMIN_PASSWORD</code></td><td>Make up a password. You'll use it to download the interviews.</td></tr>
-        </tbody></table></div></li>
-      <li>Add a payment method if Render asks, then click <b>Deploy</b>.</li>
-      <li>Wait for the status to say <b>Live</b>. The first build takes about five minutes.</li>
-      <li>Copy the address at the top of the page. It ends in <code>.onrender.com</code>.</li>
+      <li>Sign in at <a href="https://console.cloud.google.com">console.cloud.google.com</a>. Your university may already give you a Google Cloud account; if so, use it.</li>
+      <li>Create a project (or pick one), and turn on billing for it when asked. New accounts get free credit.</li>
+      <li>Copy the <b>project ID</b> from the project picker at the top. It looks like <code>my-study-123456</code>.</li>
     </ol>
-    <div class="note info"><span>Interviews are saved on a small disk attached to the server, so nothing is lost when it restarts. Render's free plan has no disk, so this runs on a small paid plan that costs a few dollars a month (see <a href="https://render.com/pricing">render.com/pricing</a>). Delete the service when your study ends to stop the charges.</span></div>
-    <details><summary>Prefer Google Cloud?</summary><div>
-      <p>Google Cloud Run works too, and can cost less: it charges only while an interview is running (usually cents a month), and interviews are saved to a Cloud Storage bucket. Your university may already have a Google Cloud account you can use. The trade-off is that setup happens in a terminal rather than with a button.</p>
-      <p>You need a Google Cloud project with billing turned on, the <a href="https://cloud.google.com/sdk/docs/install">gcloud CLI</a>, and the repo on your computer (Part 2's <b>Clone &amp; install</b> step). Then, from <code>tasknet-system</code>:</p>
-      ${term("terminal", ["$ gcloud auth login", "$ export TASKNET_PROJECT=<your-project-id>", "$ hosting/study.sh setup                 # once: turns on the Google services it needs", "$ hosting/study.sh build                 # once: packages the interviewer", "$ hosting/study.sh create my-study       # prints your address and admin password"])}
-      <p>Open <code>&lt;your address&gt;/admin</code>, sign in with that password, and paste your OpenAI key there. Paste the address into the box below and carry on from <b>Test &amp; share</b>. For occupations and a consent link, add <code>--soc</code> and <code>--consent</code> to <code>create</code>; <code>hosting/README.md</code> lists every command, including <code>remove</code> for when the study ends.</p>
-    </div></details>
     <div class="block">
-      <div class="field"><label for="appUrl">Your interviewer's address</label><input id="appUrl" data-field="appUrl" placeholder="https://tasknet-interviewer-xxxx.onrender.com" value="${esc(S.appUrl)}"><small>Paste it here and the next steps fill in your links.</small></div>
+      <div class="fields">
+        <div class="field"><label for="gproject">Project ID</label><input id="gproject" data-field="gproject" placeholder="my-study-123456" value="${esc(S.gproject)}"></div>
+        <div class="field"><label for="study">A short name for your study</label><input id="study" data-field="study" placeholder="my-study" value="${esc(S.study)}"><small>Lowercase letters, numbers and dashes. It becomes part of the address.</small></div>
+      </div>
     </div>
+    <h2>2 · Run the setup in Cloud Shell</h2>
+    <p>Open <a href="https://shell.cloud.google.com/?show=terminal">Cloud Shell ↗</a> (or click the <b>&gt;_</b> icon at the top right of the Google Cloud console). Paste these lines and press Enter. If Google asks to authorize Cloud Shell, click <b>Authorize</b>.</p>
+    ${term("Cloud Shell", gcloudCmds())}
+    <p>It takes about ten minutes, most of it packaging the interviewer. At the end it prints your interviewer's address and an <b>admin password</b>. Copy both somewhere safe.</p>
+    <h2>3 · Add your OpenAI key</h2>
+    <ol class="howto">
+      <li>Open the admin page: the address it printed, followed by <code>/admin</code>.</li>
+      <li>Sign in with the admin password.</li>
+      <li>Under <b>OpenAI key</b>, paste the key from the previous step and click <b>Save key</b>. It's checked with OpenAI first, so a mistyped key is caught right away. The dot turns green when it's saved.</li>
+    </ol>
+    <div class="block">
+      <div class="field"><label for="appUrl">Your interviewer's address</label><input id="appUrl" data-field="appUrl" placeholder="https://tasknet-my-study-xxxx.us-central1.run.app" value="${esc(S.appUrl)}"><small>Paste it here and the next steps fill in your links.</small></div>
+    </div>
+    <div class="note info"><span>Interviews and your key are saved in a storage bucket in your own project, which only you (and anyone you give access to the project) can reach.</span></div>
     <div class="checks">
-      ${check("hlive", "Render shows the service as Live")}
-      ${check("hurl", "Pasted the address above")}
+      ${check("gproj", "Google Cloud project with billing on")}
+      ${check("gcreate", "Setup finished and printed an address and admin password")}
+      ${check("hkeyset", "The admin page shows the OpenAI key as set")}
     </div>` },
 
   { id: "hshare", part: 1, label: "Test & share", need: "host", render: () => `
@@ -295,7 +300,9 @@ const STEPS = [
     </table></div>
     <p>The admin page also shows how many interviews you have so far.</p>
     <p>Part 2 sets up the aggregator, which turns the <code>interviews/</code> folder into the occupation's task list.</p>
-    <div class="note warn"><span>The files contain what participants told you. Store them the way your consent form and ethics approval say. When the study ends, download one last time, then delete the service in Render (<b>Settings → Delete</b>).</span></div>
+    <div class="note warn"><span>The files contain what participants told you. Store them the way your consent form and ethics approval say. When the study ends, download one last time, then delete the interviewer and its interviews by running this in Cloud Shell:</span></div>
+    ${term("Cloud Shell", ["$ cd tasknet-system", `$ export TASKNET_PROJECT=${gp()}`, `$ hosting/study.sh remove ${st()}     # asks you to type the name to confirm`])}
+    <div class="note info"><span>Until then it costs next to nothing while nobody is taking an interview.</span></div>
     <div class="checks">${check("hdl", "Downloaded the interviews")}</div>` },
 
   { id: "prereq", part: 2, label: "Prerequisites", need: "local", render: () => `
@@ -379,10 +386,11 @@ const STEPS = [
   { id: "help", label: "Troubleshooting", render: () => `
     <div class="eyebrow">Reference</div><h1>Troubleshooting</h1>
     <p class="lede">The problems people hit most, and what fixes them.</p>
-    ${[["Render says the deploy failed", "Open the service's <b>Events</b> tab and click the failed deploy to read its log. A missing <code>OPENAI_API_KEY</code> or <code>ADMIN_PASSWORD</code> is the usual cause: add it under <b>Environment</b>, which starts a new deploy."],
-       ["Participants see an error after the first question", "The OpenAI key is missing, wrong or out of credit. Check <b>Billing</b> on platform.openai.com. Then replace <code>OPENAI_API_KEY</code> under <b>Environment</b> in Render."],
-       ["The admin page says \"Admin is off\"", "Add <code>ADMIN_PASSWORD</code> under <b>Environment</b> in Render and wait for the restart."],
-       ["I forgot my admin password", "Change <code>ADMIN_PASSWORD</code> under <b>Environment</b> in Render. Interviews are not affected."],
+    ${[["The setup stops with a permission or billing error", "Billing must be turned on for the project, and your account needs to be an <b>Owner</b> or <b>Editor</b> of it. University-managed accounts sometimes restrict this; ask your IT team, or use a personal Google account."],
+       ["It fails at <code>--allow-unauthenticated</code> or mentions an organization policy", "Your organization blocks public web services. Ask your IT team to allow one for this project, or use a project outside the organization."],
+       ["Participants see an error after the first question", "The OpenAI key is missing, wrong or out of credit. Check <b>Billing</b> on platform.openai.com, then save a working key on your admin page."],
+       ["I forgot my admin password", "In Cloud Shell: <code>cd tasknet-system</code>, <code>export TASKNET_PROJECT=&lt;project id&gt;</code>, then <code>hosting/study.sh password &lt;study name&gt;</code>. It prints a new one. Interviews are not affected."],
+       ["I lost my interviewer's address", "In Cloud Shell, run <code>hosting/study.sh list</code> (after the same two lines as above)."],
        ["<code>aggregate/</code> is empty or <code>import aggregate</code> fails", "The submodule wasn't fetched. Run <code>git submodule update --init</code>, then <code>make setup</code> again."],
        ["<code>tasknet: command not found</code>", "Activate the venv (<code>source .venv/bin/activate</code>) or use the Make targets, which call <code>.venv/bin/python</code> directly."],
        ["Errors about <code>CLAUDE_BASE_URL</code> during build", "The writer and sharpen stages default to Claude. Set a Claude gateway, a single <code>LLM_BASE_URL</code>, or switch those stages to an OpenAI model in <code>configs.yml</code> (the <b>API keys</b> step, \"OpenAI only\")."],
@@ -402,7 +410,13 @@ const STEPS = [
     </div>` },
 ];
 
-const base = () => (S.appUrl.trim() || "https://your-app.onrender.com").replace(/\/+$/, "");
+const base = () => (S.appUrl.trim() || "https://tasknet-my-study-xxxx.us-central1.run.app").replace(/\/+$/, "");
+const gp = () => S.gproject.trim() || "<your-project-id>";
+const st = () => (S.study.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-") || "my-study");
+function gcloudCmds() {
+  return ["$ git clone https://github.com/jennjwang/tasknet-system.git", "$ cd tasknet-system", `$ export TASKNET_PROJECT=${gp()}`,
+    "$ hosting/study.sh setup", "$ hosting/study.sh build", `$ hosting/study.sh create ${st()}`];
+}
 function linkList() {
   const n = Math.max(1, Math.min(500, parseInt(S.count, 10) || 1));
   const pre = (S.prefix || "p").replace(/[^A-Za-z0-9_-]/g, "") || "p";
